@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom';
-import { Home, User, LogIn, Music2 } from 'lucide-react';
+import { Home, User, LogIn, Music2, ListMusic } from 'lucide-react';
 
 function Navigation() {
   const navLinks = [
     { to: '/', icon: Home, label: 'Inicio' },
+    { to: '/playlists', icon: ListMusic, label: 'Playlists' },
     { to: '/login', icon: LogIn, label: 'Entrar' },
     { to: '/account', icon: User, label: 'Cuenta' }
   ];

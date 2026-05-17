@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Search, Play, Pause, User } from 'lucide-react';
+import { Search, Play, Pause, User, MoreVertical, ListVideo, Plus, Check } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
+import { usePlaylists } from '../context/PlaylistContext';
 import { useNavigate } from 'react-router-dom';
 
 function Home() {
@@ -9,7 +10,9 @@ function Home() {
   const [results, setResults] = useState([]);
   const [artistResults, setArtistResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const { playSong, currentSong, isPlaying } = usePlayer();
+  const [activeMenu, setActiveMenu] = useState(null);
+  const { playSong, currentSong, isPlaying, addToQueue } = usePlayer();
+  const { playlists, addSongToPlaylist } = usePlaylists();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -97,7 +100,7 @@ function Home() {
             {results.map((song) => {
               const isThisPlaying = currentSong?.trackId === song.trackId && isPlaying;
               return (
-                <div key={song.trackId} className="card" onClick={() => playSong(song)} style={{ marginBottom: '16px' }}>
+                <div key={song.trackId} className="card" onClick={() => playSong(song)} style={{ marginBottom: '16px', position: 'relative' }}>
                   <div style={{ position: 'relative' }}>
                     <img src={song.artworkUrl100.replace('100x100', '200x200')} alt={song.trackName} className="card-img" />
                     <div style={{
@@ -118,8 +121,61 @@ function Home() {
                       {isThisPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" style={{marginLeft: '2px'}} />}
                     </div>
                   </div>
-                  <div className="card-title" title={song.trackName} onClick={() => playSong(song)} style={{ cursor: 'pointer' }}>{song.trackName}</div>
-                  <div className="card-subtitle" style={{ cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); navigate(`/artist/${song.artistId}`); }}>{song.artistName}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                      <div className="card-title" title={song.trackName} style={{ cursor: 'pointer' }}>{song.trackName}</div>
+                      <div className="card-subtitle" style={{ cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} onClick={(e) => { e.stopPropagation(); navigate(`/artist/${song.artistId}`); }}>{song.artistName}</div>
+                    </div>
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setActiveMenu(activeMenu === song.trackId ? null : song.trackId); }}
+                      style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px', flexShrink: 0, marginLeft: '4px' }}
+                    >
+                      <MoreVertical size={16} />
+                    </button>
+                  </div>
+
+                  {activeMenu === song.trackId && (
+                    <div 
+                      style={{
+                        position: 'absolute',
+                        bottom: '40px',
+                        right: '0',
+                        backgroundColor: 'var(--surface-color)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        padding: '8px',
+                        zIndex: 10,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                        minWidth: '160px'
+                      }}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <button 
+                        className="settings-item" 
+                        style={{ width: '100%', padding: '8px 12px', border: 'none', background: 'none', fontSize: '13px' }}
+                        onClick={(e) => { e.stopPropagation(); addToQueue(song); setActiveMenu(null); }}
+                      >
+                        <div className="settings-item-left">
+                          <ListVideo size={16} /> Agregar a cola
+                        </div>
+                      </button>
+                      <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '4px 0' }}></div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', padding: '4px 12px' }}>Agregar a playlist:</div>
+                      {playlists.map(p => (
+                        <button 
+                          key={p.id}
+                          className="settings-item" 
+                          style={{ width: '100%', padding: '8px 12px', border: 'none', background: 'none', fontSize: '13px' }}
+                          onClick={(e) => { e.stopPropagation(); addSongToPlaylist(p.id, song); setActiveMenu(null); }}
+                        >
+                          <div className="settings-item-left" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                            <span>{p.name}</span>
+                            {p.songs.some(s => s.trackId === song.trackId) && <Check size={14} color="var(--accent-color)" />}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               );
             })}
