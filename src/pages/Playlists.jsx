@@ -1,16 +1,28 @@
 import { useState } from 'react';
 import { usePlaylists } from '../context/PlaylistContext';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { Plus, ListMusic, MoreVertical, Edit2, Trash2, X } from 'lucide-react';
 
 function Playlists() {
   const { playlists, createPlaylist, updatePlaylist, deletePlaylist } = usePlaylists();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+
+  if (!user) {
+    return (
+      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
+        <ListMusic size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+        <h2>Inicia sesión para crear playlists</h2>
+        <p>Guarda y organiza tus canciones favoritas.</p>
+      </div>
+    );
+  }
 
   const handleOpenModal = (playlist = null) => {
     if (playlist) {

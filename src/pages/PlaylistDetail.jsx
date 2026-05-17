@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { usePlaylists } from '../context/PlaylistContext';
 import { usePlayer } from '../context/PlayerContext';
+import { useAuth } from '../context/AuthContext';
 import { Play, Pause, Shuffle, Trash2, ArrowLeft, GripVertical, ListMusic, Edit2, X } from 'lucide-react';
 
 function PlaylistDetail() {
@@ -9,12 +10,22 @@ function PlaylistDetail() {
   const navigate = useNavigate();
   const { playlists, removeSongFromPlaylist, reorderPlaylist, updatePlaylist } = usePlaylists();
   const { playSong, currentSong, isPlaying, toggleShuffle, isShuffle } = usePlayer();
+  const { user } = useAuth();
   
   const playlist = playlists.find(p => p.id === id);
 
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+
+  if (!user) {
+    return (
+      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
+        <ListMusic size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+        <h2>Inicia sesión para ver playlists</h2>
+      </div>
+    );
+  }
 
   if (!playlist) {
     return <div className="page-container">Playlist no encontrada</div>;

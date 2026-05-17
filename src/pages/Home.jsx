@@ -2,17 +2,21 @@ import { useState, useEffect } from 'react';
 import { Search, Play, Pause, User, MoreVertical, ListVideo, Plus, Check } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { usePlaylists } from '../context/PlaylistContext';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { mockFriendsData } from '../data/mockFriends';
 
 function Home() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [artistResults, setArtistResults] = useState([]);
+  const [topAlbums, setTopAlbums] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
   const { playSong, currentSong, isPlaying, addToQueue } = usePlayer();
   const { playlists, addSongToPlaylist } = usePlaylists();
+  const { user } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -39,6 +43,17 @@ function Home() {
 
     return () => clearTimeout(timer);
   }, [query]);
+
+  useEffect(() => {
+    fetch('https://itunes.apple.com/us/rss/topalbums/limit=10/json')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.feed?.entry) {
+          setTopAlbums(data.feed.entry);
+        }
+      })
+      .catch(err => console.error(err));
+  }, []);
 
   return (
     <div className="page-container">
@@ -159,21 +174,25 @@ function Home() {
                           <ListVideo size={16} /> Agregar a cola
                         </div>
                       </button>
-                      <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '4px 0' }}></div>
-                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', padding: '4px 12px' }}>Agregar a playlist:</div>
-                      {playlists.map(p => (
-                        <button 
-                          key={p.id}
-                          className="settings-item" 
-                          style={{ width: '100%', padding: '8px 12px', border: 'none', background: 'none', fontSize: '13px' }}
-                          onClick={(e) => { e.stopPropagation(); addSongToPlaylist(p.id, song); setActiveMenu(null); }}
-                        >
-                          <div className="settings-item-left" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                            <span>{p.name}</span>
-                            {p.songs.some(s => s.trackId === song.trackId) && <Check size={14} color="var(--accent-color)" />}
-                          </div>
-                        </button>
-                      ))}
+                      {user && (
+                        <>
+                          <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '4px 0' }}></div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)', padding: '4px 12px' }}>Agregar a playlist:</div>
+                          {playlists.map(p => (
+                            <button 
+                              key={p.id}
+                              className="settings-item" 
+                              style={{ width: '100%', padding: '8px 12px', border: 'none', background: 'none', fontSize: '13px' }}
+                              onClick={(e) => { e.stopPropagation(); addSongToPlaylist(p.id, song); setActiveMenu(null); }}
+                            >
+                              <div className="settings-item-left" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                                <span>{p.name}</span>
+                                {p.songs.some(s => s.trackId === song.trackId) && <Check size={14} color="var(--accent-color)" />}
+                              </div>
+                            </button>
+                          ))}
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -186,27 +205,88 @@ function Home() {
       {results.length === 0 && !loading && (
         <>
           <h1 className="page-title">Descubre</h1>
-          <h2 className="section-title">Escuchado recientemente</h2>
+          <h2 className="section-title">Álbumes más escuchados en el momento</h2>
           <div className="horizontal-list">
-            {[1, 2, 3, 4, 5].map((item) => (
-              <div key={`recent-${item}`} className="card">
-                <div className="card-img"></div>
-                <div className="card-title">Mix Diario {item}</div>
-                <div className="card-subtitle">Para ti</div>
-              </div>
-            ))}
+            {topAlbums.length > 0 ? topAlbums.map((album) => {
+              const albumId = album.id.attributes['im:id'];
+              const name = album['im:name'].label;
+              const artist = album['im:artist'].label;
+              const image = album['im:image'][2].label.replace('170x170bb', '300x300bb');
+
+              return (
+                <div key={albumId} className="card" onClick={() => navigate(`/album/${albumId}`)}>
+                  <div style={{ position: 'relative' }}>
+                    <img src={image} alt={name} className="card-img" />
+                  </div>
+                  <div className="card-title" title={name}>{name}</div>
+                  <div className="card-subtitle" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{artist}</div>
+                </div>
+              );
+            }) : (
+              <p style={{ color: 'var(--text-secondary)' }}>Cargando álbumes...</p>
+            )}
           </div>
 
-          <h2 className="section-title">Actividad de amigos</h2>
-          <div className="horizontal-list">
-            {[1, 2, 3, 4, 5].map((item) => (
-              <div key={`friend-${item}`} className="card" style={{ minWidth: '100px' }}>
-                <div className="card-img circular" style={{ width: '100px', height: '100px' }}></div>
-                <div className="card-title" style={{ textAlign: 'center' }}>Amigo {item}</div>
-                <div className="card-subtitle" style={{ textAlign: 'center' }}>Escuchando...</div>
+          {user && (
+            <>
+              <h2 className="section-title">Actividad de amigos</h2>
+              <div className="horizontal-list">
+                {mockFriendsData.map((friend) => {
+                  const isFriendPlaying = currentSong?.trackId === friend.currentSong.trackId && isPlaying;
+                  return (
+                    <div 
+                      key={`friend-${friend.id}`} 
+                      className="card" 
+                      onClick={() => playSong(friend.currentSong)}
+                      style={{ minWidth: '140px', position: 'relative', overflow: 'hidden' }}
+                    >
+                      <div style={{ position: 'relative' }}>
+                        <img 
+                          src={friend.currentSong.artworkUrl100.replace('100x100', '200x200')} 
+                          alt={friend.currentSong.trackName} 
+                          className="card-img"
+                          style={{ opacity: 0.7, objectFit: 'cover' }}
+                        />
+                        <img 
+                          src={friend.avatar} 
+                          alt={friend.name}
+                          style={{ 
+                            position: 'absolute', 
+                            bottom: '8px', 
+                            right: '8px', 
+                            width: '36px', 
+                            height: '36px', 
+                            borderRadius: '50%',
+                            border: '2px solid var(--surface-color)',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.5)'
+                          }} 
+                        />
+                        <div style={{
+                          position: 'absolute',
+                          top: '8px',
+                          right: '8px',
+                          backgroundColor: 'rgba(0,0,0,0.6)',
+                          borderRadius: '12px',
+                          padding: '2px 8px',
+                          fontSize: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: friend.status === 'online' ? '#10b981' : 'var(--text-secondary)' }}></div>
+                          {friend.time}
+                        </div>
+                      </div>
+                      <div className="card-title" style={{ marginTop: '8px' }}>{friend.name}</div>
+                      <div className="card-subtitle" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', color: isFriendPlaying ? 'var(--accent-color)' : 'var(--text-secondary)' }}>
+                        🎵 {friend.currentSong.trackName}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+            </>
+          )}
         </>
       )}
     </div>

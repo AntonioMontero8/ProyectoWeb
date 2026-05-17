@@ -9,6 +9,7 @@ import Artist from './pages/Artist';
 import Album from './pages/Album';
 import Playlists from './pages/Playlists';
 import PlaylistDetail from './pages/PlaylistDetail';
+import Friends from './pages/Friends';
 import { useAuth } from './context/AuthContext';
 import { LogIn } from 'lucide-react';
 
@@ -39,6 +40,7 @@ function App() {
           <Route path="/account" element={<Account />} />
           <Route path="/artist/:id" element={<Artist />} />
           <Route path="/album/:id" element={<Album />} />
+          <Route path="/friends" element={<Friends />} />
         </Routes>
       </main>
 

@@ -1,12 +1,19 @@
 import { NavLink } from 'react-router-dom';
-import { Home, User, LogIn, Music2, ListMusic } from 'lucide-react';
+import { Home, User, LogIn, Music2, ListMusic, Users } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 function Navigation() {
+  const { user } = useAuth();
+
   const navLinks = [
     { to: '/', icon: Home, label: 'Inicio' },
-    { to: '/playlists', icon: ListMusic, label: 'Playlists' },
-    { to: '/login', icon: LogIn, label: 'Entrar' },
-    { to: '/account', icon: User, label: 'Cuenta' }
+    ...(user ? [
+      { to: '/playlists', icon: ListMusic, label: 'Playlists' },
+      { to: '/friends', icon: Users, label: 'Amigos' },
+      { to: '/account', icon: User, label: 'Cuenta' }
+    ] : [
+      { to: '/login', icon: LogIn, label: 'Entrar' }
+    ])
   ];
 
   return (

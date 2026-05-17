@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Play, Pause, MoreVertical, ListVideo, Check } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { usePlaylists } from '../context/PlaylistContext';
+import { useAuth } from '../context/AuthContext';
 
 function Artist() {
   const { id } = useParams();
@@ -13,6 +14,7 @@ function Artist() {
   const [activeMenu, setActiveMenu] = useState(null);
   const { playSong, currentSong, isPlaying, addToQueue } = usePlayer();
   const { playlists, addSongToPlaylist } = usePlaylists();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -119,21 +121,25 @@ function Artist() {
                       <ListVideo size={16} /> Agregar a cola
                     </div>
                   </button>
-                  <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '4px 0' }}></div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', padding: '4px 12px' }}>Agregar a playlist:</div>
-                  {playlists.map(p => (
-                    <button 
-                      key={p.id}
-                      className="settings-item" 
-                      style={{ width: '100%', padding: '8px 12px', border: 'none', background: 'none', fontSize: '13px' }}
-                      onClick={(e) => { e.stopPropagation(); addSongToPlaylist(p.id, song); setActiveMenu(null); }}
-                    >
-                      <div className="settings-item-left" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100px' }}>{p.name}</span>
-                        {p.songs.some(s => s.trackId === song.trackId) && <Check size={14} color="var(--accent-color)" />}
-                      </div>
-                    </button>
-                  ))}
+                  {user && (
+                    <>
+                      <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '4px 0' }}></div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-secondary)', padding: '4px 12px' }}>Agregar a playlist:</div>
+                      {playlists.map(p => (
+                        <button 
+                          key={p.id}
+                          className="settings-item" 
+                          style={{ width: '100%', padding: '8px 12px', border: 'none', background: 'none', fontSize: '13px' }}
+                          onClick={(e) => { e.stopPropagation(); addSongToPlaylist(p.id, song); setActiveMenu(null); }}
+                        >
+                          <div className="settings-item-left" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100px' }}>{p.name}</span>
+                            {p.songs.some(s => s.trackId === song.trackId) && <Check size={14} color="var(--accent-color)" />}
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>
