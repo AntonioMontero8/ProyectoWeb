@@ -170,7 +170,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  width: 30%;
+  flex: 1;
   min-width: 120px;
 }
 .player-cover {
@@ -276,7 +276,7 @@ body {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  width: 30%;
+  flex: 1;
   gap: 16px;
   color: var(--text-secondary);
 }

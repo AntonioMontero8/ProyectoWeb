@@ -4,6 +4,8 @@ import PlayerBar from './components/PlayerBar';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Account from './pages/Account';
+import Artist from './pages/Artist';
+import Album from './pages/Album';
 
 function App() {
   return (
@@ -15,6 +17,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/account" element={<Account />} />
+          <Route path="/artist/:id" element={<Artist />} />
+          <Route path="/album/:id" element={<Album />} />
         </Routes>
       </main>
 
