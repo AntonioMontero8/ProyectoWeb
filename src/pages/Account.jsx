@@ -1,4 +1,4 @@
-import { Settings, Bell, Shield, CircleHelp, LogOut } from 'lucide-react';
+import { User, Mail, UserX, LogOut } from 'lucide-react';
 
 function Account() {
   return (
@@ -14,31 +14,25 @@ function Account() {
         </div>
       </div>
 
-      <h2 className="section-title">Configuración</h2>
+      <h2 className="section-title">Editar perfil</h2>
       
       <div className="settings-list">
         <div className="settings-item">
           <div className="settings-item-left">
-            <Settings size={20} />
-            <span>Ajustes de reproducción</span>
+            <User size={20} />
+            <span>Modificar nombre de usuario</span>
           </div>
         </div>
         <div className="settings-item">
           <div className="settings-item-left">
-            <Bell size={20} />
-            <span>Notificaciones</span>
+            <Mail size={20} />
+            <span>Cambiar correo</span>
           </div>
         </div>
         <div className="settings-item">
           <div className="settings-item-left">
-            <Shield size={20} />
-            <span>Privacidad y seguridad</span>
-          </div>
-        </div>
-        <div className="settings-item">
-          <div className="settings-item-left">
-            <CircleHelp size={20} />
-            <span>Ayuda y soporte</span>
+            <UserX size={20} />
+            <span>Bloquear personas</span>
           </div>
         </div>
         <div className="settings-item" style={{ color: '#ef4444' }}>
