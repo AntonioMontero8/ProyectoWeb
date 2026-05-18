@@ -1,14 +1,14 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePlaylists } from '../context/PlaylistContext';
 import { usePlayer } from '../context/PlayerContext';
 import { useAuth } from '../context/AuthContext';
-import { Play, Pause, Shuffle, Trash2, ArrowLeft, GripVertical, ListMusic, Edit2, X } from 'lucide-react';
+import { Play, Pause, Shuffle, Trash2, ArrowLeft, GripVertical, ListMusic, Edit2, X, Search, Plus } from 'lucide-react';
 
 function PlaylistDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { playlists, removeSongFromPlaylist, reorderPlaylist, updatePlaylist } = usePlaylists();
+  const { playlists, removeSongFromPlaylist, reorderPlaylist, updatePlaylist, addSongToPlaylist } = usePlaylists();
   const { playSong, currentSong, isPlaying, toggleShuffle, isShuffle } = usePlayer();
   const { user } = useAuth();
   
@@ -17,6 +17,31 @@ function PlaylistDetail() {
   const [showModal, setShowModal] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery.trim().length > 2) {
+        setIsSearching(true);
+        fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(searchQuery)}&entity=song&limit=5`)
+          .then(res => res.json())
+          .then(data => {
+            setSearchResults(data.results);
+            setIsSearching(false);
+          })
+          .catch(err => {
+            console.error(err);
+            setIsSearching(false);
+          });
+      } else {
+        setSearchResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   if (!user) {
     return (
@@ -34,6 +59,8 @@ function PlaylistDetail() {
   const handleOpenModal = () => {
     setName(playlist.name);
     setDescription(playlist.description);
+    setSearchQuery('');
+    setSearchResults([]);
     setShowModal(true);
   };
 
@@ -202,6 +229,53 @@ function PlaylistDetail() {
                   style={{ resize: 'none' }}
                 />
               </div>
+
+              <div className="form-group" style={{ marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                <label className="form-label">Buscar canciones para agregar</label>
+                <div style={{ position: 'relative' }}>
+                  <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }} />
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    placeholder="Buscar canciones..." 
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') e.preventDefault(); }}
+                    style={{ paddingLeft: '36px' }}
+                  />
+                </div>
+                {isSearching && <p style={{ color: 'var(--text-secondary)', fontSize: '12px', marginTop: '8px' }}>Buscando...</p>}
+                {searchResults.length > 0 && (
+                  <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '150px', overflowY: 'auto' }}>
+                    {searchResults.map(song => {
+                      const isAdded = playlist.songs && playlist.songs.some(s => s.trackId === song.trackId);
+                      return (
+                        <div key={song.trackId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px', backgroundColor: 'var(--surface-hover)', borderRadius: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+                            <img src={song.artworkUrl100} alt={song.trackName} style={{ width: '32px', height: '32px', borderRadius: '4px', marginRight: '12px' }} />
+                            <div style={{ overflow: 'hidden' }}>
+                              <div style={{ fontSize: '13px', fontWeight: '500', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{song.trackName}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{song.artistName}</div>
+                            </div>
+                          </div>
+                          {!isAdded ? (
+                            <button
+                              type="button"
+                              onClick={() => addSongToPlaylist(playlist.id, song)}
+                              style={{ background: 'var(--accent-color)', border: 'none', borderRadius: '50%', width: '24px', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', cursor: 'pointer', flexShrink: 0, marginLeft: '8px' }}
+                            >
+                              <Plus size={14} />
+                            </button>
+                          ) : (
+                            <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '8px' }}>Añadida</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
               <button type="submit" className="btn-primary" style={{ width: '100%' }}>Guardar</button>
             </form>
           </div>
