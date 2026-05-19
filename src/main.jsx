@@ -8,16 +8,23 @@ import { PlayerProvider } from './context/PlayerContext.jsx';
 import { PlaylistProvider } from './context/PlaylistContext.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 
+import { ChatProvider } from './context/ChatContext.jsx';
+import { CommentsProvider } from './context/CommentsContext.jsx';
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <GoogleOAuthProvider clientId="1234567890-abcdefghijklmnopqrstuvwxyz.apps.googleusercontent.com">
       <AuthProvider>
         <BrowserRouter>
-          <PlaylistProvider>
-            <PlayerProvider>
-              <App />
-            </PlayerProvider>
-          </PlaylistProvider>
+          <CommentsProvider>
+            <ChatProvider>
+            <PlaylistProvider>
+              <PlayerProvider>
+                <App />
+              </PlayerProvider>
+            </PlaylistProvider>
+          </ChatProvider>
+          </CommentsProvider>
         </BrowserRouter>
       </AuthProvider>
     </GoogleOAuthProvider>

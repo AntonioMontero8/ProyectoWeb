@@ -18,6 +18,12 @@ function Artist() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    const closeMenu = () => setActiveMenu(null);
+    document.addEventListener('click', closeMenu);
+    return () => document.removeEventListener('click', closeMenu);
+  }, []);
+
+  useEffect(() => {
     setLoading(true);
     Promise.all([
       fetch(`https://itunes.apple.com/lookup?id=${id}&entity=song&limit=7`).then(res => res.json()),
