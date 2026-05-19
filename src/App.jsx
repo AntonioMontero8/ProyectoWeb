@@ -14,42 +14,45 @@ import Chat from './pages/Chat';
 import SongDetail from './pages/SongDetail';
 import { useAuth } from './context/AuthContext';
 import { LogIn } from 'lucide-react';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 function App() {
   const { user } = useAuth();
 
   return (
-    <div className="app-container">
-      <Navigation />
-      
-      <main className="main-content">
-        <header className="top-bar">
-          <div className="top-bar-spacer"></div>
-          {user ? (
-            <UserMenu />
-          ) : (
-            <Link to="/login" className="btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>
-              <LogIn size={16} /> Iniciar Sesión
-            </Link>
-          )}
-        </header>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <div className="app-container">
+        <Navigation />
+        
+        <main className="main-content">
+          <header className="top-bar">
+            <div className="top-bar-spacer"></div>
+            {user ? (
+              <UserMenu />
+            ) : (
+              <Link to="/login" className="btn-primary" style={{ padding: '8px 16px', fontSize: '14px' }}>
+                <LogIn size={16} /> Iniciar Sesión
+              </Link>
+            )}
+          </header>
 
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/playlists" element={<Playlists />} />
-          <Route path="/playlists/:id" element={<PlaylistDetail />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/account" element={<Account />} />
-          <Route path="/artist/:id" element={<Artist />} />
-          <Route path="/album/:id" element={<Album />} />
-          <Route path="/friends" element={<Friends />} />
-          <Route path="/chat/:id" element={<Chat />} />
-          <Route path="/song/:id" element={<SongDetail />} />
-        </Routes>
-      </main>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/playlists" element={<Playlists />} />
+            <Route path="/playlists/:id" element={<PlaylistDetail />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/account" element={<Account />} />
+            <Route path="/artist/:id" element={<Artist />} />
+            <Route path="/album/:id" element={<Album />} />
+            <Route path="/friends" element={<Friends />} />
+            <Route path="/chat/:id" element={<Chat />} />
+            <Route path="/song/:id" element={<SongDetail />} />
+          </Routes>
+        </main>
 
-      <PlayerBar />
-    </div>
+        <PlayerBar />
+      </div>
+    </GoogleOAuthProvider>
   );
 }
 
