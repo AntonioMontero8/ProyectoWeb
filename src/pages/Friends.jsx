@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Users, UserPlus, Search, Clock, Trash2 } from 'lucide-react';
+import { Users, UserPlus, Search, Clock, Trash2, MessageCircle } from 'lucide-react';
 import { mockFriendsData, suggestedFriends } from '../data/mockFriends';
 import { usePlayer } from '../context/PlayerContext';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 function Friends() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('friends');
   const [query, setQuery] = useState('');
   const [sentRequests, setSentRequests] = useState([]);
@@ -77,13 +79,22 @@ function Friends() {
                         <span style={{ fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Escuchando: {friend.currentSong.trackName}</span>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => handleDeleteFriend(friend.id)}
-                      style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px', flexShrink: 0 }}
-                      title="Eliminar amigo"
-                    >
-                      <Trash2 size={20} />
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        onClick={() => navigate(`/chat/${friend.id}`)}
+                        style={{ background: 'none', border: 'none', color: 'var(--accent-color)', cursor: 'pointer', padding: '8px', flexShrink: 0 }}
+                        title="Enviar mensaje"
+                      >
+                        <MessageCircle size={20} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteFriend(friend.id)}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px', flexShrink: 0 }}
+                        title="Eliminar amigo"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

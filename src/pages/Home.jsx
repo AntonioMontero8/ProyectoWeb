@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Search, Play, Pause, User, MoreVertical, ListVideo, Plus, Check } from 'lucide-react';
+import { Search, Play, Pause, User, MoreVertical, ListVideo, Plus, Check, Share2, X } from 'lucide-react';
 import { usePlayer } from '../context/PlayerContext';
 import { usePlaylists } from '../context/PlaylistContext';
+import { useChat } from '../context/ChatContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { mockFriendsData } from '../data/mockFriends';
@@ -11,12 +12,21 @@ function Home() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [artistResults, setArtistResults] = useState([]);
+  const [albumResults, setAlbumResults] = useState([]);
   const [topAlbums, setTopAlbums] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeMenu, setActiveMenu] = useState(null);
   const { playSong, currentSong, isPlaying, addToQueue } = usePlayer();
   const { playlists, addSongToPlaylist } = usePlaylists();
+  const { shareSong } = useChat();
   const { user } = useAuth();
+  const [shareModalSong, setShareModalSong] = useState(null);
+
+  useEffect(() => {
+    const closeMenu = () => setActiveMenu(null);
+    document.addEventListener('click', closeMenu);
+    return () => document.removeEventListener('click', closeMenu);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -24,11 +34,13 @@ function Home() {
         setLoading(true);
         Promise.all([
           fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=musicArtist&limit=5`).then(res => res.json()),
-          fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=12`).then(res => res.json())
+          fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=12`).then(res => res.json()),
+          fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=album&limit=6`).then(res => res.json())
         ])
-          .then(([artistData, songData]) => {
+          .then(([artistData, songData, albumData]) => {
             setArtistResults(artistData.results);
             setResults(songData.results);
+            setAlbumResults(albumData.results);
             setLoading(false);
           })
           .catch(err => {
@@ -38,6 +50,7 @@ function Home() {
       } else {
         setResults([]);
         setArtistResults([]);
+        setAlbumResults([]);
       }
     }, 500);
 
@@ -108,6 +121,26 @@ function Home() {
         </>
       )}
 
+      {albumResults.length > 0 && (
+        <>
+          <h2 className="section-title">Álbumes</h2>
+          <div className="horizontal-list" style={{ flexWrap: 'wrap', overflowX: 'visible', justifyContent: 'flex-start' }}>
+            {albumResults.map((album) => (
+              <div 
+                key={album.collectionId} 
+                className="card" 
+                onClick={() => navigate(`/album/${album.collectionId}`)}
+                style={{ marginBottom: '16px' }}
+              >
+                <img src={album.artworkUrl100.replace('100x100', '200x200')} alt={album.collectionName} className="card-img" />
+                <div className="card-title" title={album.collectionName}>{album.collectionName}</div>
+                <div className="card-subtitle">{album.artistName}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
       {results.length > 0 && (
         <>
           <h2 className="section-title">Canciones</h2>
@@ -115,24 +148,30 @@ function Home() {
             {results.map((song) => {
               const isThisPlaying = currentSong?.trackId === song.trackId && isPlaying;
               return (
-                <div key={song.trackId} className="card" onClick={() => playSong(song)} style={{ marginBottom: '16px', position: 'relative' }}>
+                <div key={song.trackId} className="card" onClick={() => navigate(`/song/${song.trackId}`)} style={{ marginBottom: '16px', position: 'relative' }}>
                   <div style={{ position: 'relative' }}>
                     <img src={song.artworkUrl100.replace('100x100', '200x200')} alt={song.trackName} className="card-img" />
-                    <div style={{
-                      position: 'absolute',
-                      bottom: '20px',
-                      right: '8px',
-                      backgroundColor: 'var(--accent-color)',
-                      borderRadius: '50%',
-                      width: '40px',
-                      height: '40px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'white',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                      opacity: isThisPlaying ? 1 : 0.8
-                    }}>
+                    <div 
+                      onClick={(e) => { e.stopPropagation(); playSong(song); }}
+                      style={{
+                        position: 'absolute',
+                        bottom: '20px',
+                        right: '8px',
+                        backgroundColor: 'var(--accent-color)',
+                        borderRadius: '50%',
+                        width: '40px',
+                        height: '40px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+                        opacity: isThisPlaying ? 1 : 0.8,
+                        transition: 'transform 0.1s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                    >
                       {isThisPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" style={{marginLeft: '2px'}} />}
                     </div>
                   </div>
@@ -176,6 +215,15 @@ function Home() {
                       </button>
                       {user && (
                         <>
+                          <button 
+                            className="settings-item" 
+                            style={{ width: '100%', padding: '8px 12px', border: 'none', background: 'none', fontSize: '13px' }}
+                            onClick={(e) => { e.stopPropagation(); setShareModalSong(song); setActiveMenu(null); }}
+                          >
+                            <div className="settings-item-left">
+                              <Share2 size={16} /> Compartir con amigo
+                            </div>
+                          </button>
                           <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '4px 0' }}></div>
                           <div style={{ fontSize: '11px', color: 'var(--text-secondary)', padding: '4px 12px' }}>Agregar a playlist:</div>
                           {playlists.map(p => (
@@ -288,6 +336,60 @@ function Home() {
             </>
           )}
         </>
+      )}
+
+      {shareModalSong && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.7)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }} onClick={() => setShareModalSong(null)}>
+          <div style={{
+            backgroundColor: 'var(--surface-color)', padding: '24px',
+            borderRadius: '16px', width: '90%', maxWidth: '400px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ margin: 0, fontSize: '18px' }}>Compartir canción</h3>
+              <button onClick={() => setShareModalSong(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', backgroundColor: 'var(--bg-color)', padding: '12px', borderRadius: '12px' }}>
+              <img src={shareModalSong.artworkUrl100} alt={shareModalSong.trackName} style={{ width: '64px', height: '64px', borderRadius: '8px' }} />
+              <div>
+                <div style={{ fontWeight: 'bold', fontSize: '15px' }}>{shareModalSong.trackName}</div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{shareModalSong.artistName}</div>
+              </div>
+            </div>
+
+            <h4 style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px' }}>Enviar a:</h4>
+            <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+              {mockFriendsData.map(friend => (
+                <button 
+                  key={friend.id}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '12px', width: '100%',
+                    padding: '12px', background: 'none', border: 'none',
+                    color: 'var(--text-primary)', cursor: 'pointer', borderRadius: '8px',
+                    transition: 'background-color 0.2s', textAlign: 'left'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--surface-hover)'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  onClick={() => {
+                    shareSong(friend.id, shareModalSong);
+                    setShareModalSong(null);
+                    alert(`Canción compartida con ${friend.name}`);
+                  }}
+                >
+                  <img src={friend.avatar} alt={friend.name} style={{ width: '36px', height: '36px', borderRadius: '50%' }} />
+                  <span style={{ fontSize: '15px', fontWeight: '500' }}>{friend.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
